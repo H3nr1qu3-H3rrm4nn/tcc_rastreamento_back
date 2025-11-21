@@ -1,0 +1,67 @@
+from core.abstract.abstract_controller import AbstractController
+from core.location.location_model import Location, LocationCreate, LocationUpdate
+from core.location.location_service import LocationService
+from core.token.token_service import TokenService
+from utils.response_model import ResponseModel
+
+location_service = LocationService()
+
+class LocationController(AbstractController):
+    def __init__(self):
+        super().__init__(
+            model=Location,
+            model_create=LocationCreate,
+            model_update=LocationUpdate,
+            prefix="/location",
+            service=location_service,
+            tags=["Location"],
+            token_service=TokenService(),
+        )
+        self.get_all()
+        self.get_all_paginated()
+        self.find_by_id()
+        self.save()
+        self.update_by_id()
+        self.delete_by_id()
+        self.deactivate_by_id()
+        self.activate_by_id()
+        self.route.get("/list_by_vehicle_id/{vehicle_id}")(self.list_by_vehicle_id)
+        self.route.get("/last_by_vehicle_id/{vehicle_id}")(self.last_by_vehicle_id)
+        self.route.get("/list_by_vehicle_and_range/{vehicle_id}/{start_timestamp}/{end_timestamp}")(self.list_by_vehicle_and_range)
+
+    async def list_by_vehicle_id(self, vehicle_id: int):
+        """
+        Rota para listar todas as localizações de um veículo específico.
+        """
+        response = await LocationService().list_by_vehicle_id(vehicle_id=vehicle_id)
+        return ResponseModel(
+            success=True,
+            message=f"Localizações do veículo {vehicle_id} listadas com sucesso",
+            object=response,
+        ).model_response()
+    
+    async def last_by_vehicle_id(self, vehicle_id: int):
+        """
+        Rota para obter a última localização de um veículo específico.
+        """
+        response = await LocationService().last_by_vehicle_id(vehicle_id=vehicle_id)
+        return ResponseModel(
+            success=True,
+            message=f"Última localização do veículo {vehicle_id} obtida com sucesso",
+            object=response,
+        ).model_response()
+    
+    async def list_by_vehicle_and_range(self, vehicle_id: int, start_timestamp: str, end_timestamp: str):
+        """
+        Rota para listar todas as localizações de um veículo específico em um intervalo de tempo.
+        """
+        response = await LocationService().list_by_vehicle_and_range(
+            vehicle_id=vehicle_id,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp
+        )
+        return ResponseModel(
+            success=True,
+            message=f"Localizações do veículo {vehicle_id} no intervalo especificado listadas com sucesso",
+            object=response,
+        ).model_response()
