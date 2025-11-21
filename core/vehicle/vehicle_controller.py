@@ -1,5 +1,6 @@
+from fastapi import Depends
 from core.abstract.abstract_controller import AbstractController
-from core.token.token_service import TokenService
+from core.token.token_service import TokenService, get_user_id_from_token
 from core.vehicle.vehicle_model import Vehicle, VehicleCreate, VehicleUpdate
 from core.vehicle.vehicle_service import VehicleService
 from utils.response_model import ResponseModel
@@ -27,7 +28,7 @@ class VehicleController(AbstractController):
         self.activate_by_id()
         self.route.get("/list_by_user_id/{user_id}")(self.list_by_user_id)
 
-    async def list_by_user_id(self, user_id: int):
+    async def list_by_user_id(self, user_id:int = Depends(int(get_user_id_from_token))):
         """
         Rota para listar todos os veículos de um usuário específico.
         """

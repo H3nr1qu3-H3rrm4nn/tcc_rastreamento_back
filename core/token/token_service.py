@@ -1,12 +1,15 @@
 from http.client import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from utils.settings import Settings
-from fastapi import status
+from utils.settings import Settings, settings
+from fastapi import Security, status
+from utils import settings
 
 from utils.context_vars import (
     user_id as ctx_user_id,
 )
 
+bearer_scheme = HTTPBearer()
 
 class TokenService:
     def __init__(self, settings: Settings | None = None):
@@ -45,3 +48,11 @@ class TokenService:
             ctx_user_id.set(uid)
 
         return token_str
+    
+def get_user_id_from_token(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)):
+    """
+    Recupera o user_id do JWT passado no header 'Authorization: Bearer xxx'
+    """
+    token = credentials.credentials
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    return payload["user_id"]
