@@ -26,7 +26,9 @@ class VehicleController(AbstractController):
         self.delete_by_id()
         self.deactivate_by_id()
         self.activate_by_id()
-        self.route.get("/list_by_user_id/{user_id}")(self.list_by_user_id)
+        self.route.get("/list_by_user_id")(self.list_by_user_id)
+        self.route.get("/list_online")(self.list_online)
+        self.route.get("/stats")(self.stats)
 
     async def list_by_user_id(self, user_id:int = Depends(int(get_user_id_from_token))):
         """
