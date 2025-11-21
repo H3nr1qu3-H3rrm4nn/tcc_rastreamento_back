@@ -7,5 +7,5 @@ docker run `
   -e POSTGRES_DB=tracker `
   -p 5433:5432 `
   -v tracker_db_data:/var/lib/postgresql/data `
-  -d postgres
+  -d timescale/timescaledb:latest-pg17
 

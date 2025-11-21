@@ -1,3 +1,5 @@
+import json
+from fastapi import WebSocket
 from core.abstract.abstract_controller import AbstractController
 from core.location.location_model import Location, LocationCreate, LocationUpdate
 from core.location.location_service import LocationService
@@ -28,6 +30,7 @@ class LocationController(AbstractController):
         self.route.get("/list_by_vehicle_id/{vehicle_id}")(self.list_by_vehicle_id)
         self.route.get("/last_by_vehicle_id/{vehicle_id}")(self.last_by_vehicle_id)
         self.route.get("/list_by_vehicle_and_range/{vehicle_id}/{start_timestamp}/{end_timestamp}")(self.list_by_vehicle_and_range)
+        self.route.websocket("/websocket")
 
     async def list_by_vehicle_id(self, vehicle_id: int):
         """
@@ -65,3 +68,27 @@ class LocationController(AbstractController):
             message=f"Localizações do veículo {vehicle_id} no intervalo especificado listadas com sucesso",
             object=response,
         ).model_response()
+    
+    
+    async def websocket_location(websocket: WebSocket):
+        """
+        Rota WebSocket para receber localizações em tempo real.
+        """
+        await websocket.accept()
+        try:
+            while True:
+                data = await websocket.receive_text()
+                payload = json.loads(data)
+                
+                location_in = LocationCreate(**payload)
+                
+                location_obj = await LocationService().save(location_in)
+                await websocket.send_text(json.dumps({
+                    "success": True,
+                    "location_id": location_obj.id,
+                    "timestamp": str(location_obj.timestamp)
+                }))
+        except Exception as e:
+            await websocket.send_text(json.dumps({"success": False, "error": str(e)}))
+        finally:
+            await websocket.close()
