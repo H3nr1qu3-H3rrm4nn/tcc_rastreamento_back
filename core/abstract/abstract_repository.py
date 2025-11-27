@@ -173,7 +173,7 @@ class AbstractRepository:
             # Realiza o flush para persistir as mudanças
             await session.flush()
 
-            logger.info("Entidade criada com sucesso")
+            logger.info(f"{db_model.__class__.__name__} salvo com sucesso")
               
 
             if load_relations:

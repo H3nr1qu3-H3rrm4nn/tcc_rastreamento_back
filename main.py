@@ -1,10 +1,13 @@
 
 import asyncio
 import logging
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+
 from fastapi.security import HTTPBearer
+from core.location.location_controller import LocationController
+from core.vehicle.vehicle_controller import VehicleController
 from middleware.jwt_middleware import JWTMiddleware
 from utils.base import Base
 from core.user.user_controller import UserController
@@ -14,8 +17,10 @@ from utils.logging_config import setup_logging
 from utils.settings import Settings
 from urllib.parse import urlsplit, urlunsplit
 
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Depends, Security
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -82,7 +87,15 @@ app.add_middleware(
     JWTMiddleware
 )
 
-app.include_router(UserController().public_route)
-app.include_router(UserController().route)
+user_controller = UserController()
+vehicle_controller = VehicleController()
+location_controller = LocationController()
+
+app.include_router(user_controller.public_route)
+app.include_router(user_controller.route)
+app.include_router(vehicle_controller.route)
+app.include_router(location_controller.public_route)
+app.include_router(location_controller.route)
+
 
 
