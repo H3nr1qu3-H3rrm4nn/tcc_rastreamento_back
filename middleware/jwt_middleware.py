@@ -17,12 +17,14 @@ class JWTMiddleware(BaseHTTPMiddleware):
         "/health",
         "/docs",
         "/openapi.json",
-        "/user/login"
+        "/user/login",
+        "/user/save",
+        "/user/save/"
     ]
     
     async def dispatch(self, request: Request, call_next):
         # Verificar rotas permitidas - usar startswith para permitir subrotas
-        if any(request.url.path.startswith(path) for path in self.allowed_paths):
+        if request.url.path.rstrip("/") in [p.rstrip("/") for p in self.allowed_paths]:
             return await call_next(request)
 
         try:

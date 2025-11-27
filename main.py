@@ -66,6 +66,7 @@ app.add_middleware(
     JWTMiddleware
 )
 
+app.include_router(UserController().public_route)
 app.include_router(UserController().route)
 
 

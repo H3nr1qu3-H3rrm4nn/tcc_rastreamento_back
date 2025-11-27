@@ -2,7 +2,7 @@ import logging
 import logging.config
 from typing import Annotated
 
-from fastapi import Header, Request
+from fastapi import APIRouter, Header, Request
 
 from core.abstract.abstract_controller import AbstractController
 from core.token.token_service import TokenService
@@ -29,18 +29,20 @@ class UserController(AbstractController):
             tags=["User"],
             token_service=TokenService(),
         )
+        self.public_route = APIRouter(prefix="/user", tags=["User"])
+
         self.get_all()
         self.get_all_paginated()
         self.find_by_id()
-        # self.save()
         self.update_by_id()
         self.delete_by_id()
         self.deactivate_by_id()
         self.activate_by_id()
         self.audit()
-        self.route.post("/login")(self.login)
+
+        self.public_route.post("/save")(self.save)
+        self.public_route.post("/login")(self.login)
         self.route.get("/find_user_by_token")(self.find_user_by_token)
-        self.route.post("/save")(self.save)
 
     async def save(self, new_data: UserCreate):
         """

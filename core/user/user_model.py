@@ -41,7 +41,7 @@ class UserCreate(BaseModel):
     password: str = Field(
         ...,
         max_length=250,
-        min_length=10,
+        min_length=6,
     )
     name: str = Field(default="Dev", max_length=100, min_length=1)
     image_src: str | None = Field(
