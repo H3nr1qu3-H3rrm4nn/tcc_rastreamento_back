@@ -30,11 +30,11 @@ class VehicleController(AbstractController):
         self.route.get("/list_online")(self.list_online)
         self.route.get("/stats")(self.stats)
 
-    async def list_by_user_id(self, user_id:int = Depends(int(get_user_id_from_token))):
+    async def list_by_user_id(self, user_id: int = Depends(get_user_id_from_token)):
         """
         Rota para listar todos os veículos de um usuário específico.
         """
-        response = await VehicleService().list_by_user_id(user_id=user_id)
+        response = await VehicleService().list_by_user_id(user_id=int(user_id))
         return ResponseModel(
             success=True,
             message=f"Veículos do usuário {user_id} listados com sucesso",

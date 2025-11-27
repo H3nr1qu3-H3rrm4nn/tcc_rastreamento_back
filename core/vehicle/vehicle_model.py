@@ -4,12 +4,12 @@ from typing import Optional
 from pydantic import BaseModel
 from core.abstract.abstract_model import AbstractModel
 from utils.base import Base
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 
 
 class Vehicle(Base, AbstractModel):
-    __tablename__ = "veiculos"
+    __tablename__ = "vehicle"
 
     plate = Column(String(10), unique=True, nullable=False)
     type = Column(String(50), nullable=False)  # Caminhão, Van, Carro, Moto, etc
@@ -18,7 +18,7 @@ class Vehicle(Base, AbstractModel):
     driver_name = Column(String(255), nullable=True)  # Nome do motorista
     current_velocity = Column(Float, default=0)  # km/h
     
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False) 
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False) 
 
     # Relacionamentos
     user = relationship("User", back_populates="vehicles")

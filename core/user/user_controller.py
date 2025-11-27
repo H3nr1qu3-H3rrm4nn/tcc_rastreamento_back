@@ -6,7 +6,7 @@ from fastapi import APIRouter, Header, Request
 
 from core.abstract.abstract_controller import AbstractController
 from core.token.token_service import TokenService
-from core.user.user_model import User, UserLogin, UserCreate, UserUpdate, UserLogout
+from core.user.user_model import User, UserLogin, UserCreate, UserUpdate
 from core.user.user_service import UserService
 import yaml
 
@@ -72,7 +72,7 @@ class UserController(AbstractController):
         self,
         Authorization: Annotated[str | None, Header()],
     ):
-        token = await self.validate_token(Authorization)
+        token = await self.token_service.validate_token(Authorization)
         response = await user_service.find_by_token(token)
         return ResponseModel(
             success=True,

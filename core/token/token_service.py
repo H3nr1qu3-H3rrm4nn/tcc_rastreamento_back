@@ -1,9 +1,8 @@
 from http.client import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from utils.settings import Settings, settings
+from utils.settings import Settings
 from fastapi import Security, status
-from utils import settings
 
 from utils.context_vars import (
     user_id as ctx_user_id,
@@ -54,5 +53,11 @@ def get_user_id_from_token(credentials: HTTPAuthorizationCredentials = Security(
     Recupera o user_id do JWT passado no header 'Authorization: Bearer xxx'
     """
     token = credentials.credentials
-    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    return payload["user_id"]
+    current_settings = Settings()
+    payload = jwt.decode(
+        token,
+        current_settings.SECRET_KEY,
+        algorithms=[current_settings.ALGORITHM],
+        options={"verify_aud": False},
+    )
+    return payload.get("user") or payload.get("user_id")
