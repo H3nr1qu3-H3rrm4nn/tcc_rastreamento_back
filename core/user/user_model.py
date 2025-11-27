@@ -27,7 +27,7 @@ class UserLogin(BaseModel):
     password: str = Field(
         default="tracker2025",
         max_length=250,
-        min_length=10,
+        min_length=6,
     )
     fcm_token : str = Field(default=None)
 
