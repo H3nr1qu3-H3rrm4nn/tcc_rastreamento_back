@@ -36,7 +36,6 @@ class UserCreate(BaseModel):
     email: str = Field(
         ...,
         max_length=100,
-        pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$",
     )
     password: str = Field(
         ...,

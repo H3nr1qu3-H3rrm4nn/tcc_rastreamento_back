@@ -25,17 +25,15 @@ sp_tz = pytz.timezone("America/Sao_Paulo")
 
 class UserRepository(AbstractRepository):
 
-    async def find_by_email(self, email: str, session:AsyncSession=None):
+    async def find_by_email(self, email: str, session: AsyncSession | None = None):
         async with conditional_session(session) as db:
             try:
-                query = select(User).where(User.email == email)
-                result = await db.execute(query)
-                user = result.scalars().first()
-                return user
-            
-            except Exception as e:
-                logger.error(f"Error finding user by email: {e}")
-                return None
+                stmt = select(User).where(User.email == email)
+                result = await db.execute(stmt)
+                return result.scalars().first()
+            except Exception as exc:
+                logger.exception("find_by_email_failed email=%s", email)
+                raise
 
     async def is_admin(self, user_id: int, session:AsyncSession=None) -> bool:
         async with conditional_session(session) as db:

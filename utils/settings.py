@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     USERNAME: str = "admin"
     PASSWORD: str = "tracking2025"
     HOST: str = "localhost"
-    POSTGRES_PORT: int = 5433
+    POSTGRES_PORT: int = 5432
     DB_NAME: str = "tracker"
     DATABASE_URL: str = f"postgresql+asyncpg://{USERNAME}:{PASSWORD}@{HOST}:{POSTGRES_PORT}/{DB_NAME}"
 

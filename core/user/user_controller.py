@@ -48,6 +48,7 @@ class UserController(AbstractController):
         """
         Rota save sobrescrita para garantir que a senha seja encriptada.
         """
+        
         response = await user_service.save(
             model=User,
             new_data=new_data
@@ -59,6 +60,7 @@ class UserController(AbstractController):
         ).model_response()
 
     async def login(self, user: UserLogin, req: Request):
+        logger.info("login_attempt email=%s", user.email)
         dados_autenticacao = await user_service.login(user=user, req=req)
         return ResponseModel(
             success=True,

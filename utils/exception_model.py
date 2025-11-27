@@ -1,5 +1,5 @@
 
-class ExceptionModel:
+class ExceptionModel(Exception):
     status_code: int
     message: str
 

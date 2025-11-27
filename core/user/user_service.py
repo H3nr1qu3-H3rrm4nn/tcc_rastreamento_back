@@ -1,7 +1,7 @@
 import pytz
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 import yaml
 
@@ -17,7 +17,7 @@ from utils.connection_pool import ConnectionPool
 from utils.custom_formatter import CustomFormatter
 from utils.exception_model import ExceptionModel
 from utils.filter_model import FiltersSchema
-from utils.format import create_model_instance
+from utils.format import create_model_instance, serialize_model
 import logging
 
 from utils.response_model import ResponseModel
@@ -34,15 +34,26 @@ class UserService(AbstractService):
     crypt_context = CryptContext(schemes=["sha256_crypt"])
     
     async def login(self, user: UserLogin, req: Request):
-        
+        logger.info("login_attempt email=%s", user.email)
 
         user_db = await UserRepository().find_by_email(
             email=user.email,
         )
 
-        if not user_db or not self.crypt_context.verify(
+        if not user_db:
+            logger.warning("login_user_not_found email=%s", user.email)
+            raise ExceptionModel(status_code=400, message="Usuário ou senha incorreto")
+
+        logger.info(
+            "login_user_found id=%s active=%s",
+            getattr(user_db, "id", None),
+            getattr(user_db, "is_active", None),
+        )
+
+        if not self.crypt_context.verify(
             user.password,
             user_db.password):
+            logger.warning("login_password_mismatch id=%s", getattr(user_db, "id", None))
             raise ExceptionModel(status_code=400, message="Usuário ou senha incorreto")
 
 
@@ -61,10 +72,42 @@ class UserService(AbstractService):
         )
 
         logger.info("Usuario logado com sucesso!!")
+        logger.info("login_success id=%s", getattr(user_db, "id", None))
 
         access_token = jwt.encode(payload, Settings().SECRET_KEY, Settings().ALGORITHM)
 
         return access_token
+
+    async def find_by_token(self, token: str):
+        try:
+            payload = jwt.decode(
+                token,
+                Settings().SECRET_KEY,
+                algorithms=[Settings().ALGORITHM],
+                options={"verify_aud": False},
+            )
+        except JWTError as exc:
+            logger.warning("find_by_token_invalid_token")
+            raise ExceptionModel(status_code=401, message="Token inválido") from exc
+
+        user_id = payload.get("user")
+        user = None
+
+        if user_id is not None:
+            user = await AbstractRepository().find_by_id(User, user_id)
+        else:
+            email = payload.get("sub")
+            if email:
+                user = await UserRepository().find_by_email(email=email)
+
+        if not user:
+            logger.warning("find_by_token_user_not_found")
+            raise ExceptionModel(status_code=404, message="Usuário não encontrado")
+
+        serialized_user = serialize_model(user)
+        serialized_user.pop("password", None)
+
+        return serialized_user
 
 
     async def find_by_email(self, email: str):

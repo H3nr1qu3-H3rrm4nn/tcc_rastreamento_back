@@ -11,12 +11,28 @@ from core.user.user_controller import UserController
 from utils.connection_pool import ConnectionPool
 from fastapi.middleware.cors import CORSMiddleware
 from utils.logging_config import setup_logging
+from utils.settings import Settings
+from urllib.parse import urlsplit, urlunsplit
 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends, Security
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+
+def _mask_database_url(url: str) -> str:
+    if not url:
+        return ""
+    parts = urlsplit(url)
+    if not parts.username:
+        return url
+    netloc = parts.netloc.replace(f"{parts.username}:{parts.password}", f"{parts.username}:***") if parts.password else parts.netloc
+    return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
+
+
+settings = Settings()
+logger.info("Using database %s", _mask_database_url(settings.DATABASE_URL))
 
 
 async def wait_for_db(engine, retries: int = 5, delay: float = 1.0) -> None:
