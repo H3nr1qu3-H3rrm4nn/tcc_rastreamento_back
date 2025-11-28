@@ -6,12 +6,14 @@ from starlette.websockets import WebSocketState
 from core.abstract.abstract_controller import AbstractController
 from core.location.location_model import Location, LocationCreate, LocationUpdate
 from core.location.location_service import LocationService
+from core.vehicle.vehicle_service import VehicleService
 from core.token.token_service import TokenService
 from utils.response_model import ResponseModel
 
 logger = logging.getLogger(__name__)
 
 location_service = LocationService()
+vehicle_service = VehicleService()
 
 class LocationController(AbstractController):
     def __init__(self):
@@ -89,6 +91,7 @@ class LocationController(AbstractController):
             return
 
         await websocket.accept()
+        vehicle_id = None
         try:
             while True:
                 data = await websocket.receive_text()
@@ -99,6 +102,14 @@ class LocationController(AbstractController):
                     continue
 
                 location_in = LocationCreate(**payload)
+
+                # guarda vehicle_id para controlar status online/offline
+                if vehicle_id is None:
+                    vehicle_id = location_in.vehicle_id
+                    try:
+                        await vehicle_service.set_online_status(vehicle_id=vehicle_id, is_online=True)
+                    except Exception as exc:
+                        logger.error("erro_ao_atualizar_status_online_veiculo_%s: %s", vehicle_id, exc)
 
                 location_obj = await location_service.save(
                     model=Location,
@@ -120,6 +131,12 @@ class LocationController(AbstractController):
             if websocket.application_state == WebSocketState.CONNECTED:
                 await websocket.send_text(json.dumps({"success": False, "error": str(exc)}))
         finally:
+            # ao fechar a conexão, marca o veículo como offline, se conhecido
+            if vehicle_id is not None:
+                try:
+                    await vehicle_service.set_online_status(vehicle_id=vehicle_id, is_online=False)
+                except Exception as exc:
+                    logger.error("erro_ao_atualizar_status_offline_veiculo_%s: %s", vehicle_id, exc)
             if websocket.application_state == WebSocketState.CONNECTED:
                 await websocket.send_text(
                     json.dumps(
