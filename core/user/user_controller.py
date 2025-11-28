@@ -1,8 +1,8 @@
 import logging
 import logging.config
-from typing import Annotated
 
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, Request, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from core.abstract.abstract_controller import AbstractController
 from core.token.token_service import TokenService
@@ -17,6 +17,7 @@ from utils.context_vars import user_id as context_user_id
 logger = logging.getLogger(__name__)
 
 user_service = UserService()
+bearer_scheme = HTTPBearer(auto_error=True)
 
 class UserController(AbstractController):
     def __init__(self):
@@ -70,10 +71,23 @@ class UserController(AbstractController):
 
     async def find_user_by_token(
         self,
-        Authorization: Annotated[str | None, Header()],
+        credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
     ):
-        token = await self.token_service.validate_token(Authorization)
+        logger.info("find_user_by_token_request_received", extra={
+            "has_credentials": credentials is not None,
+            "scheme": getattr(credentials, "scheme", None),
+        })
+        token = credentials.credentials if credentials else None
+        logger.info("find_user_by_token_extracted_token", extra={
+            "token_present": bool(token),
+        })
+        # validate_token também popula context vars se necessário
+        await self.token_service.validate_token(f"Bearer {token}")
+        logger.info("find_user_by_token_token_validated")
         response = await user_service.find_by_token(token)
+        logger.info("find_user_by_token_user_loaded", extra={
+            "user_found": bool(response),
+        })
         return ResponseModel(
             success=True,
             message="Usuário retornado com sucesso",
