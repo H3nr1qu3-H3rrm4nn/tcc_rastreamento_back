@@ -23,6 +23,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
     ]
     
     async def dispatch(self, request: Request, call_next):
+        # Liberar preflight CORS sem exigir token
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Verificar rotas permitidas - usar startswith para permitir subrotas
         if request.url.path.rstrip("/") in [p.rstrip("/") for p in self.allowed_paths]:
             return await call_next(request)
