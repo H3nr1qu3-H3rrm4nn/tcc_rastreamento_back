@@ -4,6 +4,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from fastapi.security import HTTPBearer
 from core.location.location_controller import LocationController
@@ -97,6 +99,26 @@ app.include_router(user_controller.route)
 app.include_router(vehicle_controller.route)
 app.include_router(location_controller.public_route)
 app.include_router(location_controller.route)
+
+
+@app.exception_handler(RequestValidationError)
+async def log_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Log corpo e detalhes quando requisição falha na validação."""
+    try:
+        raw_body = await request.body()
+        body_str = raw_body.decode("utf-8", "replace")
+    except Exception:
+        body_str = "<unavailable>"
+
+    logger.warning(
+        "Validation error %s %s: body=%s errors=%s",
+        request.method,
+        request.url.path,
+        body_str,
+        exc.errors(),
+    )
+
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 

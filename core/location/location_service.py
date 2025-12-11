@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from core.abstract.abstract_service import AbstractService
 from core.location.location_repository import LocationRepository
 from utils.contexts import conditional_session
@@ -39,7 +41,7 @@ class LocationService(AbstractService):
                 logger.error(f"Erro ao obter a última localização do veículo {vehicle_id}: {e}")
                 raise e
             
-    async def list_by_vehicle_and_range(self, vehicle_id: int, start_timestamp: str, end_timestamp: str, session: AsyncSession = None):
+    async def list_by_vehicle_and_range(self, vehicle_id: int, start_timestamp: datetime, end_timestamp: datetime, session: AsyncSession = None):
         """
         Serviço para listar todas as localizações de um veículo específico em um intervalo de tempo.
         """

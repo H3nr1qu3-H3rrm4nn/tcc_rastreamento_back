@@ -1,7 +1,9 @@
 import json
 import logging
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from datetime import datetime
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from starlette.websockets import WebSocketState
 from core.abstract.abstract_controller import AbstractController
 from core.location.location_model import Location, LocationCreate, LocationUpdate
@@ -66,10 +68,20 @@ class LocationController(AbstractController):
         """
         Rota para listar todas as localizações de um veículo específico em um intervalo de tempo.
         """
+        try:
+            start_dt = datetime.fromisoformat(start_timestamp)
+            end_dt = datetime.fromisoformat(end_timestamp)
+        except ValueError as exc:
+            logger.error("list_by_vehicle_and_range_invalid_timestamp: %s", exc)
+            raise HTTPException(
+                status_code=400,
+                detail="Formato de data/hora inválido. Use ISO 8601, ex: 2025-11-26T01:00:00",
+            )
+
         response = await LocationService().list_by_vehicle_and_range(
             vehicle_id=vehicle_id,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp
+            start_timestamp=start_dt,
+            end_timestamp=end_dt,
         )
         return ResponseModel(
             success=True,
@@ -129,7 +141,11 @@ class LocationController(AbstractController):
         except Exception as exc:
             logger.error("websocket_location_error: %s", exc)
             if websocket.application_state == WebSocketState.CONNECTED:
-                await websocket.send_text(json.dumps({"success": False, "error": str(exc)}))
+                try:
+                    await websocket.send_text(json.dumps({"success": False, "error": str(exc)}))
+                except RuntimeError:
+                    # conexão já está sendo fechada, ignore
+                    pass
         finally:
             # ao fechar a conexão, marca o veículo como offline, se conhecido
             if vehicle_id is not None:
@@ -138,12 +154,16 @@ class LocationController(AbstractController):
                 except Exception as exc:
                     logger.error("erro_ao_atualizar_status_offline_veiculo_%s: %s", vehicle_id, exc)
             if websocket.application_state == WebSocketState.CONNECTED:
-                await websocket.send_text(
-                    json.dumps(
-                        {
-                            "success": False,
-                            "message": "connection_closed",
-                        }
+                try:
+                    await websocket.send_text(
+                        json.dumps(
+                            {
+                                "success": False,
+                                "message": "connection_closed",
+                            }
+                        )
                     )
-                )
-                await websocket.close()
+                    await websocket.close()
+                except RuntimeError:
+                    # já foi enviado close pelo stack do ASGI, não enviar mais nada
+                    pass

@@ -28,14 +28,10 @@ class VehicleCreate(BaseModel):
     name: str
     plate: str
     type: str
-    is_online: Optional[bool]
-    last_location: Optional[str]
     user_id: int
 
 class VehicleUpdate(BaseModel):
     name: Optional[str]
     plate: Optional[str]
     type: Optional[str]
-    is_online: Optional[bool]
-    last_location: Optional[str]
-    current_velocity: Optional[float]
+    user_id: Optional[int]

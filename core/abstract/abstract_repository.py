@@ -6,7 +6,7 @@ from typing import TypeVar
 from sqlalchemy import asc, desc
 from sqlalchemy_continuum import version_class
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -197,34 +197,36 @@ class AbstractRepository:
             raise e
 
     async def update_by_id(self, model: T, id: int, new_data: dict, session: AsyncSession):
-        try:
-            # Busca a entidade no banco pelo ID
-            query = select(model).where(model.id == id)
-            result = await session.execute(query)
-            data = result.scalar()
+        async with conditional_session(session) as session:
+            try:
+                # Busca a entidade no banco pelo ID
+                query = select(model).where(model.id == id)
+                result = await session.execute(query)
+                data = result.scalar()
 
-            if data:
-                # Atualiza os campos fornecidos em new_data
-                for key, value in new_data.items():
-                    if value is not None:
-                        setattr(data, key, value)
+                if data:
+                    # Atualiza os campos fornecidos em new_data
+                    for key, value in new_data.items():
+                        if value is not None:
+                            setattr(data, key, value)
 
-                # Cria a transação personalizada
-                # await create_custom_transaction(session)
+                    # Cria a transação personalizada
+                    # await create_custom_transaction(session)
 
-                # Realiza o flush para persistir as alterações
-                await session.flush()
+                    # Realiza o flush para persistir as alterações
+                    await session.flush()
+                    await session.commit()
 
-                response = data
-                logger.info("Entidade atualizada com sucesso")
-                
-                return response
-            else:
-                raise ExceptionModel(message="Entidade não encontrada", status_code=400)
+                    response = data
+                    logger.info("Entidade atualizada com sucesso")
+                    
+                    return response
+                else:
+                    raise ExceptionModel(message="Entidade não encontrada", status_code=400)
 
-        except Exception as e:
-            logger.error(f"Não foi possível atualizar a entidade -> {e}", exc_info=True)
-            raise e
+            except Exception as e:
+                logger.error(f"Não foi possível atualizar a entidade -> {e}", exc_info=True)
+                raise e
 
     async def delete_by_id(self, model: T, id: int, session: AsyncSession = None):
         async with conditional_session(session) as session:

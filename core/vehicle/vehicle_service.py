@@ -24,7 +24,7 @@ class VehicleService(AbstractService):
                 return data
 
             except Exception as e:
-                db.rollback()
+                await db.rollback()
                 logger.error(f"Erro ao listar veículos do usuário {user_id}: {e}")
                 raise e
             
@@ -42,7 +42,7 @@ class VehicleService(AbstractService):
                 return data
 
             except Exception as e:
-                db.rollback()
+                await db.rollback()
                 logger.error(f"Erro ao listar veículos online: {e}")
                 raise e
             
@@ -68,7 +68,7 @@ class VehicleService(AbstractService):
                 return stats
 
             except Exception as e:
-                db.rollback()
+                await db.rollback()
                 logger.error(f"Erro ao obter estatísticas dos veículos: {e}")
                 raise e
 

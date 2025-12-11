@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from core.abstract.abstract_repository import AbstractRepository
 from core.location.location_model import Location
@@ -40,7 +42,7 @@ class LocationRepository(AbstractRepository):
             except Exception as e:
                 raise e
             
-    async def list_by_vehicle_and_range(self, vehicle_id: int, start_timestamp: str, end_timestamp: str, session: AsyncSession = None):
+    async def list_by_vehicle_and_range(self, vehicle_id: int, start_timestamp: datetime, end_timestamp: datetime, session: AsyncSession = None):
         """
         Repositório para listar todas as localizações de um veículo específico em um intervalo de tempo.
         """
