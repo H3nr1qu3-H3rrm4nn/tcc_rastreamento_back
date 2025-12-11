@@ -22,21 +22,23 @@ COPY pyproject.toml poetry.lock* ./
 # Instala dependências principais
 RUN poetry install --no-interaction --no-ansi --only main --no-root
 
-# 🔹 Instala debugpy explicitamente (pode estar fora das deps principais)
-RUN pip install debugpy
-
 # Copia o código da aplicação
 COPY core ./core
 COPY utils ./utils
 COPY middleware ./middleware
 COPY main.py ./main.py
 COPY logging.yaml ./logging.yaml
+COPY migrations ./migrations
+COPY alembic.ini ./alembic.ini
 
 # Permite imports absolutos simples
 ENV PYTHONPATH="/app"
 
-# Expor portas da aplicação e do debug
-EXPOSE 8000 5678
+# Porta padrão reconhecida pelo Render
+ENV PORT=8000
 
-# 🔹 Comando de inicialização com debugpy + reload
-CMD ["sh", "-c", "python -m debugpy --listen 0.0.0.0:5678 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload"]
+# Expor apenas a porta da aplicação
+EXPOSE 8000
+
+# Comando de inicialização compatível com ambiente de produção (Render define PORT)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

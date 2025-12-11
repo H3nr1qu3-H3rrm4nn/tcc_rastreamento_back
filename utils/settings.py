@@ -1,4 +1,7 @@
 from enum import Enum
+from urllib.parse import quote_plus
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 class AppEnvironment(str, Enum):
@@ -9,24 +12,36 @@ class Settings(BaseSettings):
 
     APP_ENV: AppEnvironment = AppEnvironment.DEVELOPMENT
 
-    USERNAME: str = "admin"
-    PASSWORD: str = "tracking2025"
-    HOST: str = "localhost"
-    POSTGRES_PORT: int = 5432
-    DB_NAME: str = "tracker"
-    DATABASE_URL: str = f"postgresql+asyncpg://{USERNAME}:{PASSWORD}@{HOST}:{POSTGRES_PORT}/{DB_NAME}"
+    USERNAME: str = Field(default="admin")
+    PASSWORD: str = Field(default="tracking2025")
+    HOST: str = Field(default="localhost")
+    POSTGRES_PORT: int = Field(default=5432)
+    DB_NAME: str = Field(default="tracker")
+    DATABASE_URL: str | None = None
 
-    # Configurações para JWT
-    SECRET_KEY: str = "e2fc6a47b06ca21ba2cc5850927b808e8fcd9cbb979ddafe43253ff911da9644"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 1
+    SECRET_KEY: str = Field(default="")
+    ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60)
 
-    # Configurações do aplicativo
-    app_name: str = "Rastreamento API"
+    APP_NAME: str = Field(default="Rastreamento API")
 
     class Config:
         case_sensitive = True
         env_file = ".env"
         env_file_encoding = "utf-8"
+
+    @model_validator(mode="after")
+    def _ensure_database_url(self):
+        if not self.DATABASE_URL:
+            encoded_password = quote_plus(self.PASSWORD)
+            self.DATABASE_URL = (
+                f"postgresql+asyncpg://{self.USERNAME}:{encoded_password}@"
+                f"{self.HOST}:{self.POSTGRES_PORT}/{self.DB_NAME}"
+            )
+
+        if not self.SECRET_KEY:
+            raise ValueError("SECRET_KEY must be provided via environment variable.")
+
+        return self
 
 settings = Settings()

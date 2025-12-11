@@ -6,7 +6,7 @@ def custom_openapi(app):
         return app.openapi_schema
 
     openapi_schema = get_openapi(
-        title=settings.app_name,
+        title=settings.APP_NAME,
         version="1.0.0",
         description="Rastreamento Api",
         routes=app.routes,

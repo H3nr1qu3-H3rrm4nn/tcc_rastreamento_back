@@ -7,22 +7,18 @@ from utils.settings import settings
 
 class ConnectionPool:
     
-    username =getenv("POSTGRES_USERNAME", settings.USERNAME)
-    password =getenv("POSTGRES_PASSWORD", settings.PASSWORD)
-    host =("POSTGRES_HOSTNAME", settings.HOST)
-    port = (
-        int(getenv("POSTGRES_PORT"))
-        if getenv("POSTGRES_PORT")
-        else settings.POSTGRES_PORT
-    )
-    name =getenv("POSTGRES_DB_NAME", settings.DB_NAME)
+    username = getenv("POSTGRES_USERNAME", settings.USERNAME)
+    password = getenv("POSTGRES_PASSWORD", settings.PASSWORD)
+    host = getenv("POSTGRES_HOSTNAME", settings.HOST)
+    port = int(getenv("POSTGRES_PORT", settings.POSTGRES_PORT))
+    name = getenv("POSTGRES_DB_NAME", settings.DB_NAME)
     encoding = "utf8"
 
     encoded_password = quote_plus(password)
 
     engine = create_async_engine(
-        settings.DATABASE_URL,
-        pool_size=50,
+        getenv("DATABASE_URL", settings.DATABASE_URL),
+        pool_size=5,
         max_overflow=10,
     )
     session = None
