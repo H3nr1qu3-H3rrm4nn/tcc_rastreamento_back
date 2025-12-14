@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
+from zoneinfo import ZoneInfo
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer
 from sqlalchemy.orm import relationship
@@ -49,9 +51,10 @@ class LocationCreate(BaseModel):
             parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         else:
             parsed = value
-        if parsed.tzinfo is not None:
-            return parsed.replace(tzinfo=None)
-        return parsed
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=ZoneInfo("UTC"))
+        local_dt = parsed.astimezone(ZoneInfo("America/Sao_Paulo"))
+        return local_dt.replace(tzinfo=None)
 
 
 class LocationUpdate(BaseModel):
@@ -83,6 +86,7 @@ class LocationUpdate(BaseModel):
             parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         else:
             parsed = value
-        if parsed.tzinfo is not None:
-            return parsed.replace(tzinfo=None)
-        return parsed
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=ZoneInfo("UTC"))
+        local_dt = parsed.astimezone(ZoneInfo("America/Sao_Paulo"))
+        return local_dt.replace(tzinfo=None)
