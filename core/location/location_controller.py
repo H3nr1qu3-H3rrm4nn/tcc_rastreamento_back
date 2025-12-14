@@ -11,6 +11,7 @@ from core.location.location_service import LocationService
 from core.vehicle.vehicle_service import VehicleService
 from core.token.token_service import TokenService
 from utils.response_model import ResponseModel
+from utils.timezone import normalize_to_utc
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +70,8 @@ class LocationController(AbstractController):
         Rota para listar todas as localizações de um veículo específico em um intervalo de tempo.
         """
         try:
-            start_dt = datetime.fromisoformat(start_timestamp)
-            end_dt = datetime.fromisoformat(end_timestamp)
+            start_dt = normalize_to_utc(start_timestamp)
+            end_dt = normalize_to_utc(end_timestamp)
         except ValueError as exc:
             logger.error("list_by_vehicle_and_range_invalid_timestamp: %s", exc)
             raise HTTPException(
