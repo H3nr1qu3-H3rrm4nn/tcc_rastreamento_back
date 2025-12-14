@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from zoneinfo import ZoneInfo
@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 
 from core.abstract.abstract_model import AbstractModel
 from utils.base import Base
+from utils.timezone import normalize_to_utc
 
 
 class Location(Base, AbstractModel):
@@ -17,7 +18,7 @@ class Location(Base, AbstractModel):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     velocity = Column(Float, nullable=False)  # km/h
-    timestamp = Column(DateTime, default=datetime.now, nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     vehicle = relationship("Vehicle", back_populates="locations")
 
